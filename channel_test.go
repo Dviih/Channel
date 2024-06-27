@@ -22,7 +22,7 @@ var (
 )
 
 func TestChannel(t *testing.T) {
-	channel := New(16)
+	channel := New[interface{}](16)
 
 	go func(c <-chan interface{}) {
 		for {
@@ -71,7 +71,7 @@ func TestChannel(t *testing.T) {
 }
 
 func BenchmarkChannel(b *testing.B) {
-	channel := New(16)
+	channel := New[interface{}](16)
 
 	go func(c <-chan interface{}) {
 		for {
