@@ -22,3 +22,11 @@ func (channel *Channel) Sender() chan<- interface{} {
 	return c
 }
 
+func (channel *Channel) Receiver() <-chan interface{} {
+	c := make(chan interface{}, channel.size)
+
+	channel.receivers = append(channel.receivers, c)
+
+	return c
+}
+
