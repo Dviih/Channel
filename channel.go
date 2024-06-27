@@ -1,12 +1,12 @@
 package Channel
 
-type Channel struct {
+type Channel[T interface{}] struct {
 	size      int
-	receivers []chan interface{}
+	receivers []chan T
 }
 
-func (channel *Channel) Sender() chan<- interface{} {
-	c := make(chan interface{}, channel.size)
+func (channel *Channel[T]) Sender() chan<- T {
+	c := make(chan T, channel.size)
 
 	go func() {
 		for {
@@ -22,16 +22,16 @@ func (channel *Channel) Sender() chan<- interface{} {
 	return c
 }
 
-func (channel *Channel) Receiver() <-chan interface{} {
-	c := make(chan interface{}, channel.size)
+func (channel *Channel[T]) Receiver() <-chan T {
+	c := make(chan T, channel.size)
 
 	channel.receivers = append(channel.receivers, c)
 
 	return c
 }
 
-func New(size int) *Channel {
-	return &Channel{
+func New[T interface{}](size int) *Channel[T] {
+	return &Channel[T]{
 		size: size,
 	}
 }
