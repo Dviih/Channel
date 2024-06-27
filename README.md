@@ -7,9 +7,9 @@
 ## Install: `go get -u github.com/Dviih/Channel`
 
 ## Usage
-- `Sender` - creates a new sender channel.
-- `Receiver` - creates a new receiver channel.
-- `New(size)` - creates a *Channel instance.
+- `Sender[T]` - creates a new sender channel.
+- `Receiver[T]` - creates a new receiver channel.
+- `New[T](size)` - creates a *Channel instance.
 
 ## Example
 ```go
@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	channel := Channel.New(16)
+	channel := Channel.New[string](16)
 
 	sender := channel.Sender()
 	receiver := channel.Receiver()
@@ -40,7 +40,8 @@ func main() {
 	}
 }
 ```
-The code from the example creates a `*Channel` instance and gets both a sender and a receiver, then creates a coroutine for a receiver, which prints when receives data, the last part is a for loop sending `"Hello, World"` non-stop.
+The code from the example creates a `*Channel` instance and gets both a sender and a receiver, then creates a coroutine for a receiver, which prints when receives data, the last part is a for loop sending `"Hello, World"` non-stop.<br>
+`T` represents a type, if unsure use `interface{}`.
 
 ---
 #### Made for Gophers by Dviih
