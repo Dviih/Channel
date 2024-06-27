@@ -30,3 +30,8 @@ func (channel *Channel) Receiver() <-chan interface{} {
 	return c
 }
 
+func New(size int) *Channel {
+	return &Channel{
+		size: size,
+	}
+}
