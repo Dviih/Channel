@@ -31,21 +31,12 @@ func TestChannel(t *testing.T) {
 	go func(c chan<- uint64) {
 		defer wg.Done()
 
-				t.Logf("Receiver 2: %v", data)
-			}
-		}
-	}(channel.Receiver())
-
-	go func(c chan<- interface{}) {
 		for i := 0; i < times; i++ {
 			expected = rand.Uint64()
 			t.Logf("Expected: %d", expected)
 
 			c <- expected
 
-			c <- s
-
-			wg.Done()
 			time.Sleep(duration)
 		}
 	}(channel.Sender())
