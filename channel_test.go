@@ -13,11 +13,8 @@ const (
 )
 
 var (
-	wg       sync.WaitGroup
-	expected string
-
-	count1 int
-	count2 int
+	expected uint64
+	counters sync.Map
 )
 
 func TestChannel(t *testing.T) {
