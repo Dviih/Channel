@@ -85,9 +85,10 @@ func BenchmarkChannel(b *testing.B) {
 		close(c)
 	}(channel.Sender())
 
-	wg.Add(b.N)
 	wg.Wait()
 
-	b.Logf("Receiver 1 received: %v", count1)
-	b.Logf("Receiver 2 received: %v", count2)
+	counters.Range(func(key, value any) bool {
+		b.Logf("Receiver %d received: %d", key, value)
+		return true
+	})
 }
