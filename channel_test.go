@@ -18,7 +18,7 @@ var (
 )
 
 func TestChannel(t *testing.T) {
-	channel := New[interface{}](16)
+	channel := New[uint64](0)
 
 	go func(c <-chan interface{}) {
 		for {
@@ -34,14 +34,8 @@ func TestChannel(t *testing.T) {
 		}
 	}(channel.Receiver())
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case data := <-c:
-				if data != expected {
-					t.Errorf("Receiver 2 expected %v but got %v", expected, data)
-					continue
-				}
+	go func(c chan<- uint64) {
+		defer wg.Done()
 
 				t.Logf("Receiver 2: %v", data)
 			}
@@ -67,16 +61,10 @@ func TestChannel(t *testing.T) {
 }
 
 func BenchmarkChannel(b *testing.B) {
-	channel := New[interface{}](16)
+	channel := New[uint64](0)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case <-c:
-				count1++
-			}
-		}
-	}(channel.Receiver())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
 	go func(c <-chan interface{}) {
 		for {
@@ -87,7 +75,9 @@ func BenchmarkChannel(b *testing.B) {
 		}
 	}(channel.Receiver())
 
-	go func(c chan<- interface{}) {
+	go func(c chan<- uint64) {
+		defer wg.Done()
+
 		for i := 0; i < b.N; i++ {
 			c <- rand.Uint64()
 		}
