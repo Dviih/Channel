@@ -17,16 +17,31 @@ var (
 	counters sync.Map
 )
 
+func receiver(t *testing.T, wg *sync.WaitGroup, id int, c <-chan uint64) {
+	for {
+		select {
+		case data := <-c:
+			if data != expected {
+				t.Fail()
+				t.Errorf("Receiver %d expected %d but got %d", id, expected, data)
+
+				wg.Done()
+				return
+			}
+
+			t.Logf("Receiver %d: %d", id, data)
+		}
+	}
+}
+
 func TestChannel(t *testing.T) {
 	channel := New[uint64](0)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-				t.Logf("Receiver 1: %v", data)
-			}
-		}
-	}(channel.Receiver())
+	go receiver(t, wg, 1, channel.Receiver())
+	go receiver(t, wg, 2, channel.Receiver())
 
 	go func(c chan<- uint64) {
 		defer wg.Done()
