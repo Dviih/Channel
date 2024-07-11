@@ -59,20 +59,29 @@ func TestChannel(t *testing.T) {
 	wg.Wait()
 }
 
+func counter(id int, c <-chan uint64) {
+	for {
+		select {
+		case <-c:
+			v, ok := counters.Load(id)
+			if !ok {
+				counters.Store(id, uint64(1))
+				continue
+			}
+
+			counters.Store(id, v.(uint64)+1)
+		}
+	}
+}
+
 func BenchmarkChannel(b *testing.B) {
 	channel := New[uint64](0)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case <-c:
-				count2++
-			}
-		}
-	}(channel.Receiver())
+	go counter(1, channel.Receiver())
+	go counter(2, channel.Receiver())
 
 	go func(c chan<- uint64) {
 		defer wg.Done()
@@ -80,8 +89,6 @@ func BenchmarkChannel(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			c <- rand.Uint64()
 		}
-
-		close(c)
 	}(channel.Sender())
 
 	wg.Wait()
