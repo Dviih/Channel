@@ -2,7 +2,6 @@ package Channel
 
 import (
 	"math/rand/v2"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -54,10 +53,10 @@ func TestChannel(t *testing.T) {
 
 	go func(c chan<- interface{}) {
 		for i := 0; i < times; i++ {
-			s := strconv.Itoa(int(rand.Uint32()))
+			expected = rand.Uint64()
+			t.Logf("Expected: %d", expected)
 
-			t.Logf("Expected: %v", s)
-			expected = s
+			c <- expected
 
 			c <- s
 
@@ -93,10 +92,7 @@ func BenchmarkChannel(b *testing.B) {
 
 	go func(c chan<- interface{}) {
 		for i := 0; i < b.N; i++ {
-			s := strconv.Itoa(int(rand.Uint32()))
-			c <- s
-
-			wg.Done()
+			c <- rand.Uint64()
 		}
 
 		close(c)
