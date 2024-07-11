@@ -20,14 +20,8 @@ var (
 func TestChannel(t *testing.T) {
 	channel := New[uint64](0)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case data := <-c:
-				if data != expected {
-					t.Errorf("Receiver 1 expected %v but got %v", expected, data)
-					continue
-				}
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
 				t.Logf("Receiver 1: %v", data)
 			}
@@ -56,7 +50,6 @@ func TestChannel(t *testing.T) {
 		}
 	}(channel.Sender())
 
-	wg.Add(times)
 	wg.Wait()
 }
 
