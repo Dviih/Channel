@@ -2,7 +2,6 @@ package Channel
 
 import (
 	"math/rand/v2"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -14,97 +13,88 @@ const (
 )
 
 var (
-	wg       sync.WaitGroup
-	expected string
-
-	count1 int
-	count2 int
+	expected uint64
+	counters sync.Map
 )
 
+func receiver(t *testing.T, wg *sync.WaitGroup, id int, c <-chan uint64) {
+	for {
+		select {
+		case data := <-c:
+			if data != expected {
+				t.Fail()
+				t.Errorf("Receiver %d expected %d but got %d", id, expected, data)
+
+				wg.Done()
+				return
+			}
+
+			t.Logf("Receiver %d: %d", id, data)
+		}
+	}
+}
+
 func TestChannel(t *testing.T) {
-	channel := New[interface{}](16)
+	channel := New[uint64](0)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case data := <-c:
-				if data != expected {
-					t.Errorf("Receiver 1 expected %v but got %v", expected, data)
-					continue
-				}
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
-				t.Logf("Receiver 1: %v", data)
-			}
-		}
-	}(channel.Receiver())
+	go receiver(t, wg, 1, channel.Receiver())
+	go receiver(t, wg, 2, channel.Receiver())
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case data := <-c:
-				if data != expected {
-					t.Errorf("Receiver 2 expected %v but got %v", expected, data)
-					continue
-				}
+	go func(c chan<- uint64) {
+		defer wg.Done()
 
-				t.Logf("Receiver 2: %v", data)
-			}
-		}
-	}(channel.Receiver())
-
-	go func(c chan<- interface{}) {
 		for i := 0; i < times; i++ {
-			s := strconv.Itoa(int(rand.Uint32()))
+			expected = rand.Uint64()
+			t.Logf("Expected: %d", expected)
 
-			t.Logf("Expected: %v", s)
-			expected = s
+			c <- expected
 
-			c <- s
-
-			wg.Done()
 			time.Sleep(duration)
 		}
 	}(channel.Sender())
 
-	wg.Add(times)
 	wg.Wait()
 }
 
+func counter(id int, c <-chan uint64) {
+	for {
+		select {
+		case <-c:
+			v, ok := counters.Load(id)
+			if !ok {
+				counters.Store(id, uint64(1))
+				continue
+			}
+
+			counters.Store(id, v.(uint64)+1)
+		}
+	}
+}
+
 func BenchmarkChannel(b *testing.B) {
-	channel := New[interface{}](16)
+	channel := New[uint64](0)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case <-c:
-				count1++
-			}
-		}
-	}(channel.Receiver())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
-	go func(c <-chan interface{}) {
-		for {
-			select {
-			case <-c:
-				count2++
-			}
-		}
-	}(channel.Receiver())
+	go counter(1, channel.Receiver())
+	go counter(2, channel.Receiver())
 
-	go func(c chan<- interface{}) {
+	go func(c chan<- uint64) {
+		defer wg.Done()
+
 		for i := 0; i < b.N; i++ {
-			s := strconv.Itoa(int(rand.Uint32()))
-			c <- s
-
-			wg.Done()
+			c <- rand.Uint64()
 		}
-
-		close(c)
 	}(channel.Sender())
 
-	wg.Add(b.N)
 	wg.Wait()
 
-	b.Logf("Receiver 1 received: %v", count1)
-	b.Logf("Receiver 2 received: %v", count2)
+	counters.Range(func(key, value any) bool {
+		b.Logf("Receiver %d received: %d", key, value)
+		return true
+	})
 }
