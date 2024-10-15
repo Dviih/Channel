@@ -7,6 +7,7 @@
 ## Install: `go get -u github.com/Dviih/Channel`
 
 ## Usage
+- `Send[T]` - sends as a parameter.
 - `Sender[T]` - creates a new sender channel.
 - `Receiver[T]` - creates a new receiver channel.
 - `New[T](size)` - creates a *Channel instance.
