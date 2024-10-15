@@ -33,9 +33,20 @@ const (
 var (
 	expected uint64
 	counters sync.Map
+
+	i       = 0
+	channel Channel[uint64]
+	wg      sync.WaitGroup
 )
 
-func receiver(t *testing.T, wg *sync.WaitGroup, id int, c <-chan uint64) {
+func init() {
+	wg.Add(2)
+}
+
+func receiver(t *testing.T, id int, c <-chan uint64) {
+	t.Parallel()
+	wg.Done()
+
 	for {
 		select {
 		case data := <-c:
@@ -43,7 +54,6 @@ func receiver(t *testing.T, wg *sync.WaitGroup, id int, c <-chan uint64) {
 				t.Fail()
 				t.Errorf("Receiver %d expected %d but got %d", id, expected, data)
 
-				wg.Done()
 				return
 			}
 
@@ -52,29 +62,36 @@ func receiver(t *testing.T, wg *sync.WaitGroup, id int, c <-chan uint64) {
 	}
 }
 
+func TestChannelReceiver1(t *testing.T) {
+	go receiver(t, 1, channel.Receiver())
+
+	for i != times {
+		continue
+	}
+}
+
+func TestChannelReceiver2(t *testing.T) {
+	go receiver(t, 2, channel.Receiver())
+
+	for i != times {
+		continue
+	}
+}
+
 func TestChannel(t *testing.T) {
-	channel := New[uint64](0)
-
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
-	go receiver(t, wg, 1, channel.Receiver())
-	go receiver(t, wg, 2, channel.Receiver())
-
-	go func(c chan<- uint64) {
-		defer wg.Done()
-
-		for i := 0; i < times; i++ {
-			expected = rand.Uint64()
-			t.Logf("Expected: %d", expected)
-
-			c <- expected
-
-			time.Sleep(duration)
-		}
-	}(channel.Sender())
-
+	t.Parallel()
 	wg.Wait()
+
+	sender := channel.Sender()
+
+	for i = 0; i < times; i++ {
+		expected = rand.Uint64()
+		t.Logf("Expected: %d", expected)
+
+		sender <- expected
+
+		time.Sleep(duration)
+	}
 }
 
 func counter(id int, c <-chan uint64) {
