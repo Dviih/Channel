@@ -38,8 +38,8 @@ func (channel *Channel[T]) Sender() chan<- T {
 		for {
 			select {
 			case data := <-c:
-				for _, p := range channel.receivers {
-					p <- data
+				for _, receiver := range channel.receivers {
+					receiver <- data
 				}
 			}
 		}
