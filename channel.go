@@ -27,10 +27,6 @@ type Channel[T interface{}] struct {
 	receivers []chan T
 }
 
-func (channel *Channel[T]) Send(v ...T) {
-	for _, t := range v {
-		for _, receiver := range channel.receivers {
-			receiver <- t
 type Options struct {
 	size    int
 	timeout time.Duration
