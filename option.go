@@ -20,3 +20,8 @@ package Channel
 
 import "time"
 
+type Option interface {
+	Name() string
+	Value() interface{}
+}
+
