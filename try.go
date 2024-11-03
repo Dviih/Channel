@@ -24,3 +24,5 @@ import (
 	"time"
 )
 
+func Try[T interface{}](c chan T, data T, timeout time.Duration) bool {
+}
