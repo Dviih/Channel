@@ -38,7 +38,7 @@ type Options struct {
 }
 
 func (channel *Channel[T]) Sender() chan<- T {
-	c := make(chan T, channel.size)
+	c := make(chan T, channel.options.size)
 
 	go func() {
 		for {
@@ -55,10 +55,9 @@ func (channel *Channel[T]) Sender() chan<- T {
 }
 
 func (channel *Channel[T]) Receiver() <-chan T {
-	c := make(chan T, channel.size)
+	c := make(chan T, channel.options.size)
 
 	channel.receivers = append(channel.receivers, c)
-
 	return c
 }
 
