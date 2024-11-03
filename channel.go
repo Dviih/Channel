@@ -33,6 +33,7 @@ type Options struct {
 	resend  bool
 }
 
+func (channel *Channel[T]) Send(t ...T) {
 
 	for _, data := range t {
 		for i, receiver := range channel.receivers {
