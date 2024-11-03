@@ -18,8 +18,12 @@
 
 package Channel
 
+import (
+	"time"
+)
+
 type Channel[T interface{}] struct {
-	size      int
+	options   *Options
 	receivers []chan T
 }
 
@@ -27,12 +31,18 @@ func (channel *Channel[T]) Send(v ...T) {
 	for _, t := range v {
 		for _, receiver := range channel.receivers {
 			receiver <- t
+type Options struct {
+	size    int
+	timeout time.Duration
+	resend  bool
+}
+
 		}
 	}
 }
 
 func (channel *Channel[T]) Sender() chan<- T {
-	c := make(chan T, channel.size)
+	c := make(chan T, channel.options.size)
 
 	go func() {
 		for {
@@ -49,15 +59,27 @@ func (channel *Channel[T]) Sender() chan<- T {
 }
 
 func (channel *Channel[T]) Receiver() <-chan T {
-	c := make(chan T, channel.size)
+	c := make(chan T, channel.options.size)
 
 	channel.receivers = append(channel.receivers, c)
-
 	return c
 }
 
-func New[T interface{}](size int) *Channel[T] {
+func New[T interface{}](v ...Option) *Channel[T] {
+	options := &Options{}
+
+	for _, option := range v {
+		switch option.Name() {
+		case "size":
+			options.size = option.Value().(int)
+		case "timeout":
+			options.timeout = option.Value().(time.Duration)
+		case "resend":
+			options.resend = true
+		}
+	}
+
 	return &Channel[T]{
-		size: size,
+		options: options,
 	}
 }
