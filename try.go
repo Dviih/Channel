@@ -34,4 +34,7 @@ func Try[T interface{}](c chan T, data T, timeout time.Duration) bool {
 		}
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 }
