@@ -65,6 +65,17 @@ func (channel *Channel[T]) Receiver() <-chan T {
 func New[T interface{}](v ...Option) *Channel[T] {
 	options := &Options{}
 
+	for _, option := range v {
+		switch option.Name() {
+		case "size":
+			options.size = option.Value().(int)
+		case "timeout":
+			options.timeout = option.Value().(time.Duration)
+		case "resend":
+			options.resend = true
+		}
+	}
+
 	return &Channel[T]{
 		options: options,
 	}
