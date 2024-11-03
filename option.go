@@ -37,3 +37,7 @@ func (size *optionSize) Value() interface{} {
 	return size.size
 }
 
+func OptionSize(size int) Option {
+	return &optionSize{size: size}
+}
+
