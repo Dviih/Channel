@@ -80,21 +80,7 @@ func TestChannel(t *testing.T) {
 
 		time.Sleep(duration)
 	}
-}
 
-func counter(id int, c <-chan uint64) {
-	for {
-		select {
-		case <-c:
-			v, ok := counters.Load(id)
-			if !ok {
-				counters.Store(id, uint64(1))
-				continue
-			}
-
-			counters.Store(id, v.(uint64)+1)
-		}
-	}
 }
 
 func BenchmarkChannel(b *testing.B) {
