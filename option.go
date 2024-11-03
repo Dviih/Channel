@@ -41,3 +41,19 @@ func OptionSize(size int) Option {
 	return &optionSize{size: size}
 }
 
+type optionTimeout struct {
+	timeout time.Duration
+}
+
+func (*optionTimeout) Name() string {
+	return "timeout"
+}
+
+func (timeout *optionTimeout) Value() interface{} {
+	return timeout.timeout
+}
+
+func OptionTimeout(timeout time.Duration) Option {
+	return &optionTimeout{timeout: timeout}
+}
+
