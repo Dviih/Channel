@@ -18,6 +18,10 @@
 
 package Channel
 
+import (
+	"time"
+)
+
 type Channel[T interface{}] struct {
 	options   *Options
 	receivers []chan T
