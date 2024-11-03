@@ -80,20 +80,28 @@ func TestChannel(t *testing.T) {
 }
 
 func BenchmarkChannel(b *testing.B) {
-	channel := New[uint64](0)
+	channel := New[uint64](OptionSize(b.N))
 
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
+	var wg sync.WaitGroup
+	wg.Add(b.N)
 
-	go counter(1, channel.Receiver())
-	go counter(2, channel.Receiver())
+	go func(receiver <-chan uint64) {
+		for {
+			select {
+			case <-receiver:
+				wg.Done()
+			}
+		}
+	}(channel.Receiver())
 
-	go func(c chan<- uint64) {
-		defer wg.Done()
+	go func(sender chan<- uint64) {
+		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			c <- rand.Uint64()
+			sender <- rand.Uint64()
 		}
+
+		b.StopTimer()
 	}(channel.Sender())
 
 	wg.Wait()
