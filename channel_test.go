@@ -59,19 +59,11 @@ func receiver(t *testing.T, id int, c <-chan uint64) {
 }
 
 func TestChannelReceiver1(t *testing.T) {
-	go receiver(t, 1, channel.Receiver())
-
-	for i != times {
-		continue
-	}
+	receiver(t, 1, channel.Receiver())
 }
 
 func TestChannelReceiver2(t *testing.T) {
-	go receiver(t, 2, channel.Receiver())
-
-	for i != times {
-		continue
-	}
+	receiver(t, 2, channel.Receiver())
 }
 
 func TestChannel(t *testing.T) {
