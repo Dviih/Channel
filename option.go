@@ -57,3 +57,16 @@ func OptionTimeout(timeout time.Duration) Option {
 	return &optionTimeout{timeout: timeout}
 }
 
+type optionResend struct{}
+
+func (*optionResend) Name() string {
+	return "resend"
+}
+
+func (*optionResend) Value() interface{} {
+	return true
+}
+
+func OptionResend() Option {
+	return &optionResend{}
+}
