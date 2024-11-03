@@ -25,3 +25,15 @@ type Option interface {
 	Value() interface{}
 }
 
+type optionSize struct {
+	size int
+}
+
+func (*optionSize) Name() string {
+	return "size"
+}
+
+func (size *optionSize) Value() interface{} {
+	return size.size
+}
+
