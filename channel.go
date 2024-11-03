@@ -62,8 +62,10 @@ func (channel *Channel[T]) Receiver() <-chan T {
 	return c
 }
 
-func New[T interface{}](size int) *Channel[T] {
+func New[T interface{}](v ...Option) *Channel[T] {
+	options := &Options{}
+
 	return &Channel[T]{
-		size: size,
+		options: options,
 	}
 }
