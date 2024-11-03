@@ -34,6 +34,32 @@ type Options struct {
 }
 
 func (channel *Channel[T]) Send(t ...T) {
+	if channel.options.resend {
+		current := channel.receivers
+		go func() {
+			time.Sleep(channel.options.timeout)
+
+			for i, receiver := range channel.receivers {
+				x := false
+				for _, c := range current {
+					if receiver == c {
+						x = true
+						break
+					}
+				}
+
+				if x {
+					continue
+				}
+
+				for _, data := range t {
+					if !Try(receiver, data, channel.options.timeout) {
+						channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+					}
+				}
+			}
+		}()
+	}
 
 	for _, data := range t {
 		for i, receiver := range channel.receivers {
