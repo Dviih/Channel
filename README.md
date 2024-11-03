@@ -1,6 +1,6 @@
 # Channel
 
-### Channels are useful, so does your application, but in some contexts that requires the same channel to send data across many receivers, here is the solution.
+### Channels are useful, so does your application, but in some contexts that need the same channel to send data across many receivers, here is the solution.
 
 ---
 
@@ -10,7 +10,12 @@
 - `Send[T]` - sends as a parameter.
 - `Sender[T]` - creates a new sender channel.
 - `Receiver[T]` - creates a new receiver channel.
-- `New[T](size)` - creates a *Channel instance.
+- `New[T](Options)` - creates a `*Channel`.
+
+## Options
+- `Size` - Creates a buffered channel.
+- `Timeout` - Sets timeout for Try.
+- `Resend` - Might want to resend after timeout.
 
 ## Example
 ```go
@@ -22,7 +27,7 @@ import (
 )
 
 func main() {
-	channel := Channel.New[string](16)
+	channel := Channel.New[string](Channel.OptionSize(16))
 
 	sender := channel.Sender()
 	receiver := channel.Receiver()
