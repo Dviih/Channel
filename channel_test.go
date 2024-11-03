@@ -19,6 +19,7 @@
 package Channel
 
 import (
+	"context"
 	"math/rand/v2"
 	"sync"
 	"testing"
@@ -32,20 +33,13 @@ const (
 
 var (
 	expected uint64
-	counters sync.Map
 
-	i       = 0
-	channel Channel[uint64]
-	wg      sync.WaitGroup
+	channel     = New[uint64]()
+	ctx, cancel = context.WithCancel(context.Background())
 )
-
-func init() {
-	wg.Add(2)
-}
 
 func receiver(t *testing.T, id int, c <-chan uint64) {
 	t.Parallel()
-	wg.Done()
 
 	for {
 		select {
@@ -58,78 +52,57 @@ func receiver(t *testing.T, id int, c <-chan uint64) {
 			}
 
 			t.Logf("Receiver %d: %d", id, data)
+		case <-ctx.Done():
+			return
 		}
 	}
 }
 
 func TestChannelReceiver1(t *testing.T) {
-	go receiver(t, 1, channel.Receiver())
-
-	for i != times {
-		continue
-	}
+	receiver(t, 1, channel.Receiver())
 }
 
 func TestChannelReceiver2(t *testing.T) {
-	go receiver(t, 2, channel.Receiver())
-
-	for i != times {
-		continue
-	}
+	receiver(t, 2, channel.Receiver())
 }
 
 func TestChannel(t *testing.T) {
 	t.Parallel()
-	wg.Wait()
 
-	sender := channel.Sender()
-
-	for i = 0; i < times; i++ {
+	for i := 0; i < times; i++ {
 		expected = rand.Uint64()
-		t.Logf("Expected: %d", expected)
 
-		sender <- expected
-
+		channel.Send(expected)
 		time.Sleep(duration)
 	}
-}
 
-func counter(id int, c <-chan uint64) {
-	for {
-		select {
-		case <-c:
-			v, ok := counters.Load(id)
-			if !ok {
-				counters.Store(id, uint64(1))
-				continue
-			}
-
-			counters.Store(id, v.(uint64)+1)
-		}
-	}
+	cancel()
 }
 
 func BenchmarkChannel(b *testing.B) {
-	channel := New[uint64](0)
+	channel := New[uint64](OptionSize(b.N))
 
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
+	var wg sync.WaitGroup
+	wg.Add(b.N)
 
-	go counter(1, channel.Receiver())
-	go counter(2, channel.Receiver())
+	go func(receiver <-chan uint64) {
+		for {
+			select {
+			case <-receiver:
+				wg.Done()
+			}
+		}
+	}(channel.Receiver())
 
-	go func(c chan<- uint64) {
-		defer wg.Done()
+	go func(sender chan<- uint64) {
+		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			c <- rand.Uint64()
+			sender <- rand.Uint64()
 		}
+
+		b.StopTimer()
 	}(channel.Sender())
 
 	wg.Wait()
-
-	counters.Range(func(key, value any) bool {
-		b.Logf("Receiver %d received: %d", key, value)
-		return true
-	})
 }

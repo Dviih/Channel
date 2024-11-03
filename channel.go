@@ -27,16 +27,22 @@ type Channel[T interface{}] struct {
 	receivers []chan T
 }
 
-func (channel *Channel[T]) Send(v ...T) {
-	for _, t := range v {
-		for _, receiver := range channel.receivers {
-			receiver <- t
 type Options struct {
 	size    int
 	timeout time.Duration
 	resend  bool
 }
 
+func (channel *Channel[T]) Send(t ...T) {
+	if channel.options.resend {
+		go channel.resend(t...)
+	}
+
+	for _, data := range t {
+		for i, receiver := range channel.receivers {
+			if !Try(receiver, data, channel.options.timeout) {
+				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+			}
 		}
 	}
 }
@@ -48,14 +54,45 @@ func (channel *Channel[T]) Sender() chan<- T {
 		for {
 			select {
 			case data := <-c:
-				for _, receiver := range channel.receivers {
-					receiver <- data
+				for i, receiver := range channel.receivers {
+					if channel.options.resend {
+						go channel.resend(data)
+					}
+
+					if !Try(receiver, data, channel.options.timeout) {
+						channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+					}
 				}
 			}
 		}
 	}()
 
 	return c
+}
+
+func (channel *Channel[T]) resend(t ...T) {
+	current := channel.receivers
+	time.Sleep(channel.options.timeout)
+
+	for i, receiver := range channel.receivers {
+		x := false
+		for _, c := range current {
+			if receiver == c {
+				x = true
+				break
+			}
+		}
+
+		if x {
+			continue
+		}
+
+		for _, data := range t {
+			if !Try(receiver, data, channel.options.timeout) {
+				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+			}
+		}
+	}
 }
 
 func (channel *Channel[T]) Receiver() <-chan T {
