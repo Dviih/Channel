@@ -55,6 +55,10 @@ func (channel *Channel[T]) Sender() chan<- T {
 			select {
 			case data := <-c:
 				for i, receiver := range channel.receivers {
+					if channel.options.resend {
+						go channel.resend(data)
+					}
+
 					if !Try(receiver, data, channel.options.timeout) {
 						channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
 					}
