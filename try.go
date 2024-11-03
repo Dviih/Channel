@@ -25,4 +25,13 @@ import (
 )
 
 func Try[T interface{}](c chan T, data T, timeout time.Duration) bool {
+	if timeout == 0 {
+		select {
+		case c <- data:
+			return true
+		default:
+			return false
+		}
+	}
+
 }
