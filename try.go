@@ -42,4 +42,12 @@ func Try[T interface{}](c chan T, data T, timeout time.Duration) bool {
 		case c <- data:
 			cancel()
 			return true
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return false
+			}
+
+			return true
+		}
+	}
 }
