@@ -33,6 +33,12 @@ type Options struct {
 	resend  bool
 }
 
+
+	for _, data := range t {
+		for i, receiver := range channel.receivers {
+			if !Try(receiver, data, channel.options.timeout) {
+				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+			}
 		}
 	}
 }
