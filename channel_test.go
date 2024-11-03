@@ -19,6 +19,7 @@
 package Channel
 
 import (
+	"context"
 	"math/rand/v2"
 	"sync"
 	"testing"
@@ -32,16 +33,10 @@ const (
 
 var (
 	expected uint64
-	counters sync.Map
 
-	i       = 0
-	channel Channel[uint64]
-	wg      sync.WaitGroup
+	channel     = New[uint64]()
+	ctx, cancel = context.WithCancel(context.Background())
 )
-
-func init() {
-	wg.Add(2)
-}
 
 func receiver(t *testing.T, id int, c <-chan uint64) {
 	t.Parallel()
