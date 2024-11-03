@@ -40,7 +40,6 @@ var (
 
 func receiver(t *testing.T, id int, c <-chan uint64) {
 	t.Parallel()
-	wg.Done()
 
 	for {
 		select {
@@ -53,6 +52,8 @@ func receiver(t *testing.T, id int, c <-chan uint64) {
 			}
 
 			t.Logf("Receiver %d: %d", id, data)
+		case <-ctx.Done():
+			return
 		}
 	}
 }
