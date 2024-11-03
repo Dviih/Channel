@@ -68,19 +68,15 @@ func TestChannelReceiver2(t *testing.T) {
 
 func TestChannel(t *testing.T) {
 	t.Parallel()
-	wg.Wait()
 
-	sender := channel.Sender()
-
-	for i = 0; i < times; i++ {
+	for i := 0; i < times; i++ {
 		expected = rand.Uint64()
-		t.Logf("Expected: %d", expected)
 
-		sender <- expected
-
+		channel.Send(expected)
 		time.Sleep(duration)
 	}
 
+	cancel()
 }
 
 func BenchmarkChannel(b *testing.B) {
