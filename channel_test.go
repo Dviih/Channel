@@ -28,13 +28,13 @@ import (
 
 const (
 	times    = 5
-	duration = time.Second
+	duration = time.Microsecond
 )
 
 var (
 	expected uint64
 
-	channel     = New[uint64]()
+	channel     = New[uint64](OptionTimeout(10 * time.Microsecond))
 	ctx, cancel = context.WithCancel(context.Background())
 )
 
