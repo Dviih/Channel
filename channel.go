@@ -99,9 +99,13 @@ func (channel *Channel[T]) resend(t ...T) {
 }
 
 func (channel *Channel[T]) Receiver() <-chan T {
+	defer channel.m.Unlock()
+
 	c := make(chan T, channel.options.size)
 
+	channel.m.Lock()
 	channel.receivers = append(channel.receivers, c)
+
 	return c
 }
 
