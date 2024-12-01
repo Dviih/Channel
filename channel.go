@@ -101,6 +101,18 @@ func (channel *Channel[T]) Receiver() <-chan T {
 	return c
 }
 
+func (channel *Channel[T]) Close(c <-chan T) {
+	defer channel.m.Unlock()
+	channel.m.Lock()
+
+	for i, receiver := range channel.receivers {
+		if receiver == c {
+			channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+			break
+		}
+	}
+}
+
 func New[T interface{}](v ...Option) *Channel[T] {
 	options := &Options{}
 
