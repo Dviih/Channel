@@ -28,13 +28,13 @@ import (
 
 const (
 	times    = 5
-	duration = time.Second
+	duration = time.Microsecond
 )
 
 var (
 	expected uint64
 
-	channel     = New[uint64]()
+	channel     = New[uint64](OptionTimeout(10 * time.Microsecond))
 	ctx, cancel = context.WithCancel(context.Background())
 )
 
@@ -45,9 +45,7 @@ func receiver(t *testing.T, id int, c <-chan uint64) {
 		select {
 		case data := <-c:
 			if data != expected {
-				t.Fail()
 				t.Errorf("Receiver %d expected %d but got %d", id, expected, data)
-
 				return
 			}
 
