@@ -42,9 +42,9 @@ func (channel *Channel[T]) Send(t ...T) {
 	}
 
 	for _, data := range t {
-		for i, receiver := range channel.receivers {
+		for _, receiver := range channel.receivers {
 			if !Try(receiver, data, channel.options.timeout) {
-				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+				channel.Close(receiver)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func (channel *Channel[T]) resend(t ...T) {
 	for _, receiver := range cmp(current, channel.receivers) {
 		for _, data := range t {
 			if !Try(receiver, data, channel.options.timeout) {
-				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+				channel.Close(receiver)
 			}
 		}
 	}
