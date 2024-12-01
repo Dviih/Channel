@@ -19,10 +19,13 @@
 package Channel
 
 import (
+	"sync"
 	"time"
 )
 
 type Channel[T interface{}] struct {
+	m sync.Mutex
+
 	options   *Options
 	receivers []chan T
 }
