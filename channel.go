@@ -19,10 +19,13 @@
 package Channel
 
 import (
+	"sync"
 	"time"
 )
 
 type Channel[T interface{}] struct {
+	m sync.Mutex
+
 	options   *Options
 	receivers []chan T
 }
@@ -39,9 +42,9 @@ func (channel *Channel[T]) Send(t ...T) {
 	}
 
 	for _, data := range t {
-		for i, receiver := range channel.receivers {
+		for _, receiver := range channel.receivers {
 			if !Try(receiver, data, channel.options.timeout) {
-				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+				channel.Close(receiver)
 			}
 		}
 	}
@@ -54,15 +57,7 @@ func (channel *Channel[T]) Sender() chan<- T {
 		for {
 			select {
 			case data := <-c:
-				for i, receiver := range channel.receivers {
-					if channel.options.resend {
-						go channel.resend(data)
-					}
-
-					if !Try(receiver, data, channel.options.timeout) {
-						channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
-					}
-				}
+				channel.Send(data)
 			}
 		}
 	}()
@@ -74,32 +69,36 @@ func (channel *Channel[T]) resend(t ...T) {
 	current := channel.receivers
 	time.Sleep(channel.options.timeout)
 
-	for i, receiver := range channel.receivers {
-		x := false
-		for _, c := range current {
-			if receiver == c {
-				x = true
-				break
-			}
-		}
-
-		if x {
-			continue
-		}
-
+	for _, receiver := range cmp(current, channel.receivers) {
 		for _, data := range t {
 			if !Try(receiver, data, channel.options.timeout) {
-				channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+				channel.Close(receiver)
 			}
 		}
 	}
 }
 
 func (channel *Channel[T]) Receiver() <-chan T {
+	defer channel.m.Unlock()
+
 	c := make(chan T, channel.options.size)
 
+	channel.m.Lock()
 	channel.receivers = append(channel.receivers, c)
+
 	return c
+}
+
+func (channel *Channel[T]) Close(c <-chan T) {
+	defer channel.m.Unlock()
+	channel.m.Lock()
+
+	for i, receiver := range channel.receivers {
+		if receiver == c {
+			channel.receivers = append(channel.receivers[:i], channel.receivers[i+1:]...)
+			break
+		}
+	}
 }
 
 func New[T interface{}](v ...Option) *Channel[T] {
@@ -119,4 +118,20 @@ func New[T interface{}](v ...Option) *Channel[T] {
 	return &Channel[T]{
 		options: options,
 	}
+}
+
+func cmp[T interface{}](old []chan T, new []chan T) (cmp []chan T) {
+	m := make(map[chan T]bool)
+
+	for _, v := range old {
+		m[v] = true
+	}
+
+	for _, v := range new {
+		if !m[v] {
+			cmp = append(cmp, v)
+		}
+	}
+
+	return cmp
 }
