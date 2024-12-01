@@ -119,3 +119,19 @@ func New[T interface{}](v ...Option) *Channel[T] {
 		options: options,
 	}
 }
+
+func cmp[T interface{}](old []chan T, new []chan T) (cmp []chan T) {
+	m := make(map[chan T]bool)
+
+	for _, v := range old {
+		m[v] = true
+	}
+
+	for _, v := range new {
+		if !m[v] {
+			cmp = append(cmp, v)
+		}
+	}
+
+	return cmp
+}
