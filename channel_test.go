@@ -45,9 +45,7 @@ func receiver(t *testing.T, id int, c <-chan uint64) {
 		select {
 		case data := <-c:
 			if data != expected {
-				t.Fail()
 				t.Errorf("Receiver %d expected %d but got %d", id, expected, data)
-
 				return
 			}
 
