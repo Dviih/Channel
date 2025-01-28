@@ -4,6 +4,11 @@
 
 ---
 
+# Deprecation notice
+### This project was completely remade for the better under [sync](https://github.com/Dviih/sync).
+
+---
+
 ## Install: `go get -u github.com/Dviih/Channel`
 
 ## Usage
